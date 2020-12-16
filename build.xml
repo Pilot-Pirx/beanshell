@@ -1,6 +1,6 @@
 <!--
 	Ant build file for BeanShell2
-	https://github.com/jimjag/beanshell2
+	https://github.com/beanshell/beanshell
 
 	Uses Ant 1.9
 	http://www.apache.org/
@@ -23,7 +23,7 @@
 	<property name="Specification-Title" value="BeanShell" />
 	<property name="Specification-Version" value="${version}" />
 	<property name="Specification-Vendor" value="http://www.beanshell.org/" />
-	<property name="Implementation-Vendor" value="https://github.com/jimjag/beanshell2" />
+	<property name="Implementation-Vendor" value="https://github.com/beanshell/beanshell" />
 
 	<!-- choose an alternate compiler -->
 	<!-- 
