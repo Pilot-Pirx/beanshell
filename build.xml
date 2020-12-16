@@ -1,8 +1,8 @@
 <!--
-	Ant build file for BeanShell2
+	Ant build file for BeanShell
 	https://github.com/beanshell/beanshell
 
-	Uses Ant 1.9
+	Uses Ant 1.6
 	http://www.apache.org/
 
 	Ant issues - 
@@ -10,7 +10,7 @@
 		- Why can't I nest filesets?  This seems like it would be so easy and
 		useful...
 -->
-<project name="BeanShell" default="compile-all" basedir=".">
+<project name="beanshell" default="compile-all" basedir=".">
 
 <!-- Project Configuration -->
 
@@ -39,6 +39,9 @@
 	<property name="test-src-dir" value="tests/src" />
 	<property name="javadoc-dir" value="javadoc" />
 	<property name="bsf-src-dir" value="bsf/src" />
+    <property name="engine-src-dir" value="src/bsh/engine" />
+    <property name="engine-config"
+        value="engine/config/javax.script.ScriptEngineFactory" />
 
 	<property name="javacc-lib" 
 		value="${lib-dir}/javacc.jar"/>
@@ -64,6 +67,10 @@
 		value="bsh/util/BeanShellBSFEngine.java,TestBshBSF.java"/>
 	-->
 
+    <!-- Uncomment to build without making the javax.script (JSR223) adapter
+    <property name="exclude-engine" value="bsh/engine/**"/>
+    -->
+
 	<!-- Uncomment to build without the ASM class generator code.
 	<property name="exclude-classgen" 
 		value="bsh/org/objectweb/asm/**,bsh/ClassGeneratorImpl.java,bsh/ClassGeneratorUtil.java,bsh/DelayedEvalBshMethod.java"/>
@@ -87,7 +94,7 @@
 	<!--  Add up all of the excludes -->
 	<!-- how do I add strings to break this long line? -->
 	<property name="excludes" 
-		value="${exclude-1.2},${exclude-1.1},${exclude-bsf},${exclude-servlet},${excludes-legacy},${exclude-classgen},${excludes-arbitrary}"/>
+        value="${exclude-1.2},${exclude-1.1},${exclude-bsf},${exclude-engine},${exclude-servlet},${excludes-legacy},${exclude-classgen},${excludes-arbitrary}"/>
 
 	<!-- JARs -->
 	<property name="javadoc-zip" value="${dist-dir}/bsh-${version}-javadoc.zip"/>
@@ -105,6 +112,7 @@
 		value="${dist-dir}/bsh-reflect-${version}.jar"/>
 	<property name="util-jar" value="${dist-dir}/bsh-util-${version}.jar"/>
 	<property name="bsf-jar" value="${dist-dir}/bsh-bsf-${version}.jar"/>
+    <property name="engine-jar" value="${dist-dir}/bsh-engine-${version}.jar"/>
 	<property name="classgen-jar" value="${dist-dir}/bsh-classgen-${version}.jar"/>
 	<property name="bshservlet-wbsh-war" 
 		value="${dist-dir}/bshservlet-wbsh.war"/>
@@ -197,7 +205,7 @@
 		<!--compiler="${build-compiler}"-->
 		
 		<javac
-		    srcdir="${src-dir}:${test-src-dir}:${bsf-src-dir}"
+        srcdir="${src-dir}:${test-src-dir}:${bsf-src-dir}:${engine-src-dir}"
 			destdir="${build-dir}"
 			deprecation="${deprecation}"
 			optimize="on"
@@ -230,6 +238,9 @@
 				</patternset>
 			</fileset>
 		</copy>
+
+        <!-- Install the javax.script engine factory config -->
+        <copy file="${engine-config}" todir="${build-dir}/META-INF/services" />
 
 		<tstamp>
 			<format property="DATE" pattern="yyyy-MM-dd hh:mm:ss" />
@@ -278,6 +289,7 @@
 		<delete quiet="true" file="${commands-jar}"/>
 		<delete quiet="true" file="${reflect-jar}"/>
 		<delete quiet="true" file="${bsf-jar}"/>
+        <delete quiet="true" file="${engine-jar}"/>
 		<delete quiet="true" file="${classgen-jar}"/>
 		<delete quiet="true" file="${bshservlet-wbsh-war}"/>
 		<delete quiet="true" file="${bshservlet-war}"/>
@@ -335,6 +347,13 @@
 			<include name="bsh/util/BeanShellBSFEngine.class"/>
 		</patternset>
 	</fileset>
+
+    <fileset id="engine-fileset" dir="${build-dir}">
+        <patternset>
+            <include name="bsh/engine/**.class"/>
+            <include name="META-INF/services/javax.script*"/>
+        </patternset>
+    </fileset>
 
 	<fileset id="classgen-fileset" dir="${build-dir}">
 		<patternset>
@@ -428,6 +447,7 @@
 			<fileset refid="util-fileset"/>
 			<fileset refid="commands-fileset"/>
 			<fileset refid="bsf-fileset"/>
+            <fileset refid="engine-fileset"/>
 			<fileset refid="classgen-fileset"/>
 			<fileset refid="bshservlet-fileset"/>
 <!-- hack, see core-fileset -->
@@ -525,6 +545,12 @@
 		</antcall>
 
 		<antcall target="jarfileset">
+            <param name="target-jar" value="${engine-jar}"/>
+            <param name="specification-title" value="BeanShell JSR223 Engine"/>
+            <param name="fileset" value="engine-fileset"/>
+        </antcall>
+
+        <antcall target="jarfileset">
 			<param name="target-jar" value="${classgen-jar}"/>
 			<param name="specification-title" value="BeanShell classgen"/>
 			<param name="fileset" value="classgen-fileset"/>
